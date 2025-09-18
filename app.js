@@ -21,16 +21,13 @@ const appContext = {
   errorEl: document.getElementById("error-message"),
   canvas: document.getElementById("canvas"),
   ctx: document.getElementById("canvas").getContext("2d"),
-
-  // --- ADD THESE MISSING LINES ---
   downloadLink: document.getElementById("download-link"),
   downloadBtnText: document.getElementById("download-btn-text"),
   newSizeEl: document.getElementById("new-size"),
-  // ------------------------------
-
-  RASTER_SCALE_FACTOR: 10, // Shared constant
-  formatBytes: formatBytes, // Pass utility function in context
-  imageFiles: [], // App state for loaded files
+  RASTER_SCALE_FACTOR: 10,
+  formatBytes: formatBytes,
+  imageFiles: [], 
+  previewUrls: [], 
 };
 
 // --- Event Listeners ---
@@ -97,10 +94,14 @@ function displayPreviewsAndDetails(context) {
   let totalSize = 0;
   previewGrid.innerHTML = "";
 
-  imageFiles.forEach(({ file, image }) => {
+  imageFiles.forEach(({ file, previewUrl }) => {
     totalSize += file.size;
     const previewEl = document.createElement("img");
-    previewEl.src = image.src;
+    previewEl.src = previewUrl;
+    if (previewUrl.startsWith("blob:")) {
+      context.previewUrls.push(previewUrl);
+    }
+
     previewEl.alt = file.name;
     previewEl.title = `${file.name} (${formatBytes(file.size)})`;
     previewEl.className = "w-full h-full object-cover rounded-md shadow-sm";

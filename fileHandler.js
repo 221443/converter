@@ -1,16 +1,17 @@
 /**
- * Processes a single image file using the modern createImageBitmap method.
- * This is more robust and efficient than using FileReader and new Image().
+ * Processes a single image file, creating an ImageBitmap for processing
+ * and an Object URL for previews.
  */
 async function handleImageFile(file) {
   try {
-    // createImageBitmap decodes the image off the main thread and is optimized for canvas rendering.
     const imageBitmap = await createImageBitmap(file);
-    // The image object can now be an ImageBitmap, which works seamlessly with ctx.drawImage.
-    return { file, image: imageBitmap };
+    // This line creates the URL needed for the thumbnail preview.
+    const previewUrl = URL.createObjectURL(file);
+	console.log("previewUrl:", previewUrl);    
+    // Ensure the returned object includes the 'previewUrl'.
+    return { file, image: imageBitmap, previewUrl: previewUrl };
   } catch (error) {
     console.error("Could not process image file:", file.name, error);
-    // Return null so Promise.all doesn't fail for one bad file.
     return null;
   }
 }
@@ -19,7 +20,6 @@ async function handleImageFile(file) {
  * Processes all pages of a single PDF file, creating an image preview for each.
  */
 async function handlePdfFile(file) {
-  // This function remains unchanged.
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -34,17 +34,13 @@ async function handlePdfFile(file) {
             (async (pageNum) => {
               const page = await pdf.getPage(pageNum);
               const viewport = page.getViewport({ scale: 1.5 });
-
               const tempCanvas = document.createElement("canvas");
               const tempCtx = tempCanvas.getContext("2d");
               tempCanvas.height = viewport.height;
               tempCanvas.width = viewport.width;
-
               await page.render({ canvasContext: tempCtx, viewport }).promise;
-
               const img = new Image();
               const originalFilename = file.name.substring(0, file.name.lastIndexOf("."));
-
               const pageFile = {
                 name: `${originalFilename}-page-${pageNum}`,
                 size: file.size / numPages,
@@ -52,7 +48,10 @@ async function handlePdfFile(file) {
               };
 
               return new Promise((res, rej) => {
-                img.onload = () => res({ file: pageFile, image: img });
+                img.onload = () => {
+                  // Ensure the returned object for PDF pages also includes the 'previewUrl'.
+                  res({ file: pageFile, image: img, previewUrl: img.src });
+                };
                 img.onerror = rej;
                 img.src = tempCanvas.toDataURL("image/png");
               });
