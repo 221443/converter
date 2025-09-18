@@ -24,13 +24,18 @@ function updateDownloadUI(blob, filename, appContext) {
  * Helper function to draw an image onto the shared canvas at a higher resolution.
  * This centralizes the rasterization logic used by both PDF and ZIP conversion.
  */
-function rasterizeImage(image, appContext) {
+function rasterizeImage(file, image, appContext) {
   const { canvas, ctx, RASTER_SCALE_FACTOR } = appContext;
   
+  // Conditionally set the scale factor. Use 1 for non-SVGs.
+  const isSvg = file.type === 'image/svg+xml';
+  const scaleFactor = isSvg ? RASTER_SCALE_FACTOR : 1;
+
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
-  canvas.width = width * RASTER_SCALE_FACTOR;
-  canvas.height = height * RASTER_SCALE_FACTOR;
+  
+  canvas.width = width * scaleFactor;
+  canvas.height = height * scaleFactor;
 
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -80,26 +85,40 @@ export async function convertToPdf(imageFiles, appContext) {
  * This function now only handles the zipping logic.
  */
 export async function convertToZip(imageFiles, appContext) {
-  const { formatSelect, qualitySlider, canvas } = appContext;
+  // Destructure only what's needed for setup.
+  // We avoid destructuring 'canvas' here to prevent async bugs.
+  const { formatSelect, qualitySlider } = appContext;
   const zip = new JSZip();
   const format = formatSelect.value;
   const mimeType = format === "jpg" ? "image/jpeg" : `image/${format}`;
   const quality = parseFloat(qualitySlider.value);
 
+  // Use map to create an array of promises.
   const conversionPromises = imageFiles.map(({ file, image }) => {
-    return new Promise((resolve) => {
-      rasterizeImage(image, appContext);
-      canvas.toBlob((blob) => {
-        const originalFilename = file.name;
-        const lastDotIndex = originalFilename.lastIndexOf(".");
-        const nameWithoutExtension = lastDotIndex > 0 ? originalFilename.substring(0, lastDotIndex) : originalFilename;
-        const newFilename = `${nameWithoutExtension}.${format}`;
-        zip.file(newFilename, blob);
-        resolve();
-      }, mimeType, quality);
+    // Each image conversion gets its own promise.
+    return new Promise((resolve, reject) => {
+      try {
+        // 1. Rasterize the image. This modifies the shared canvas.
+        rasterizeImage(file, image, appContext);
+
+        // 2. Immediately call .toBlob(). Its callback is async.
+        appContext.canvas.toBlob((blob) => {
+          const originalFilename = file.name;
+          const lastDotIndex = originalFilename.lastIndexOf(".");
+          const nameWithoutExtension = lastDotIndex > 0 ? originalFilename.substring(0, lastDotIndex) : originalFilename;
+          const newFilename = `${nameWithoutExtension}.${format}`;
+          zip.file(newFilename, blob);
+
+          // 3. Resolve the promise once the blob is created and added to the zip.
+          resolve();
+        }, mimeType, quality);
+      } catch (err) {
+        reject(err);
+      }
     });
   });
 
+  // Wait for all the blob conversions to complete.
   await Promise.all(conversionPromises);
 
   const zipBlob = await zip.generateAsync({ type: "blob" });
