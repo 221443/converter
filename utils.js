@@ -1,7 +1,8 @@
+// utils.js
+
 /**
  * Utility to format bytes into KB, MB, etc.
  */
-
 export function formatBytes(bytes, decimals = 2) {
   if (!bytes || bytes === 0) return "0 Bytes";
   const k = 1024;
@@ -13,27 +14,27 @@ export function formatBytes(bytes, decimals = 2) {
 
 /**
  * Displays an error message.
+ * Receives the error element from the appContext.
  */
-export function showError(message) {
-  errorMessage.textContent = message;
-  errorMessage.classList.remove("hidden");
+export function showError(message, appContext) {
+  appContext.errorEl.textContent = message;
+  appContext.errorEl.classList.remove("hidden");
 }
 
 /**
  * Hides the error message.
+ * Receives the error element from the appContext.
  */
-export function hideError() {
-  const errorMessage = document.getElementById("error-message");
-  errorMessage.classList.add("hidden");
+export function hideError(appContext) {
+  appContext.errorEl.classList.add("hidden");
 }
 
 /**
  * Sets the loading state for the convert button.
+ * Receives button elements from the appContext.
  */
-export function setLoading(isLoading, text = "Convert Files") {
-  const convertBtnText = document.getElementById("convert-btn-text");
-  const convertBtn = document.getElementById("convert-btn");
-
+export function setLoading(isLoading, appContext, text = "Converting...") {
+  const { convertBtn, convertBtnText } = appContext;
   convertBtn.disabled = isLoading;
   convertBtnText.textContent = isLoading ? text : "Convert Files";
 }

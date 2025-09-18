@@ -1,64 +1,70 @@
+// app.js
+
 import { formatBytes, showError, hideError, setLoading } from "./utils.js";
 import { handleImageFile, handlePdfFile } from "./fileHandler.js";
 import { convertToPdf, convertToZip } from "./converter.js";
 
-// DOM element references
-const imageInput = document.getElementById("image-input");
-const previewGrid = document.getElementById("preview-grid");
-const imageDetails = document.getElementById("image-details");
-const fileCountEl = document.getElementById("file-count");
-const totalSizeEl = document.getElementById("total-size");
-const formatSelect = document.getElementById("format-select");
-const qualityContainer = document.getElementById("quality-container");
-const qualitySlider = document.getElementById("quality-slider");
-const qualityValue = document.getElementById("quality-value");
-const convertBtn = document.getElementById("convert-btn");
-const outputSection = document.getElementById("output-section");
-const canvas = document.getElementById("canvas");
+// The App Context object: one place to hold all DOM elements and state.
+const appContext = {
+  imageInput: document.getElementById("image-input"),
+  previewGrid: document.getElementById("preview-grid"),
+  imageDetails: document.getElementById("image-details"),
+  fileCountEl: document.getElementById("file-count"),
+  totalSizeEl: document.getElementById("total-size"),
+  formatSelect: document.getElementById("format-select"),
+  qualityContainer: document.getElementById("quality-container"),
+  qualitySlider: document.getElementById("quality-slider"),
+  qualityValue: document.getElementById("quality-value"),
+  convertBtn: document.getElementById("convert-btn"),
+  convertBtnText: document.getElementById("convert-btn-text"),
+  outputSection: document.getElementById("output-section"),
+  errorEl: document.getElementById("error-message"),
+  canvas: document.getElementById("canvas"),
+  ctx: document.getElementById("canvas").getContext("2d"),
 
-let imageFiles = []; // Will store {file, image object}
+  // --- ADD THESE MISSING LINES ---
+  downloadLink: document.getElementById("download-link"),
+  downloadBtnText: document.getElementById("download-btn-text"),
+  newSizeEl: document.getElementById("new-size"),
+  // ------------------------------
+
+  RASTER_SCALE_FACTOR: 10, // Shared constant
+  formatBytes: formatBytes, // Pass utility function in context
+  imageFiles: [], // App state for loaded files
+};
 
 // --- Event Listeners ---
 
-// Listen for file input changes
-imageInput.addEventListener("change", handleFileSelect);
+appContext.imageInput.addEventListener("change", (e) => handleFileSelect(e, appContext));
 
-// Listen for format changes to show/hide quality slider
-formatSelect.addEventListener("change", () => {
+appContext.formatSelect.addEventListener("change", () => {
+  const { formatSelect, qualityContainer } = appContext;
   const selectedFormat = formatSelect.value;
-  // PDF output doesn't have a quality setting
-  const isQualityVisible = selectedFormat === "jpeg" || selectedFormat === "webp";
+  const isQualityVisible = selectedFormat === "jpeg" || selectedFormat === "webp" || selectedFormat === "jpg";
   qualityContainer.style.display = isQualityVisible ? "block" : "none";
 });
 
-// Update quality value display when slider moves
-qualitySlider.addEventListener("input", () => {
-  qualityValue.textContent = qualitySlider.value;
+appContext.qualitySlider.addEventListener("input", () => {
+  appContext.qualityValue.textContent = appContext.qualitySlider.value;
 });
 
-// Listen for convert button clicks
-convertBtn.addEventListener("click", processFiles);
+appContext.convertBtn.addEventListener("click", () => processFiles(appContext));
 
 // --- Functions ---
 
-/**
- * Handles the file selection event for multiple files (images and PDFs).
- */
-async function handleFileSelect(event) {
+async function handleFileSelect(event, context) {
   const files = event.target.files;
   if (!files || files.length === 0) return;
 
-  setLoading(true, "Loading files...");
-  // Reset state
-  imageFiles = [];
-  previewGrid.innerHTML = "";
-  hideError();
-  outputSection.classList.remove("visible-section");
-  outputSection.classList.add("hidden-section");
+  setLoading(true, context);
+  context.imageFiles = [];
+  context.previewGrid.innerHTML = "";
+  hideError(context);
+  context.outputSection.classList.remove("visible-section");
+  context.outputSection.classList.add("hidden-section");
 
   const filePromises = Array.from(files).map((file) => {
     if (file.type.startsWith("image/")) {
-      // SVG is also image/svg+xml, so it is handled by handleImageFile now
       return handleImageFile(file);
     } else if (file.type === "application/pdf") {
       return handlePdfFile(file);
@@ -70,30 +76,27 @@ async function handleFileSelect(event) {
 
   try {
     const results = await Promise.all(filePromises);
-    imageFiles = results.flat().filter(Boolean); // Flatten results for multi-page PDFs
+    context.imageFiles = results.flat().filter(Boolean);
 
-    if (imageFiles.length === 0) {
-      showError("No valid image or PDF files were selected.");
-      imageDetails.classList.remove("visible-section");
-      imageDetails.classList.add("hidden-section");
+    if (context.imageFiles.length === 0) {
+      showError("No valid image or PDF files were selected.", context);
+      context.imageDetails.classList.add("hidden-section");
       return;
     }
-
-    displayPreviewsAndDetails();
+    displayPreviewsAndDetails(context);
   } catch (error) {
     console.error("Error loading files:", error);
-    showError("There was an error loading one or more files.");
+    showError("There was an error loading one or more files.", context);
   } finally {
-    setLoading(false);
+    setLoading(false, context);
   }
 }
 
-/**
- * Displays image previews and file details in the UI.
- */
-function displayPreviewsAndDetails() {
+function displayPreviewsAndDetails(context) {
+  const { imageFiles, previewGrid, fileCountEl, totalSizeEl, imageDetails, formatBytes } = context;
   let totalSize = 0;
   previewGrid.innerHTML = "";
+
   imageFiles.forEach(({ file, image }) => {
     totalSize += file.size;
     const previewEl = document.createElement("img");
@@ -111,21 +114,24 @@ function displayPreviewsAndDetails() {
   imageDetails.classList.add("visible-section");
 }
 
-/**
- * Main function to route to the correct conversion method based on user selection.
- */
-async function processFiles() {
-  if (imageFiles.length === 0) {
-    showError("No files selected to convert.");
+async function processFiles(context) {
+  if (context.imageFiles.length === 0) {
+    showError("No files selected to convert.", context);
     return;
   }
-  const format = formatSelect.value;
-  setLoading(true, "Converting...");
+  const format = context.formatSelect.value;
+  setLoading(true, context, "Converting...");
 
-  if (format === "pdf") {
-    await convertToPdf(imageFiles);
-  } else {
-    await convertToZip(imageFiles);
+  try {
+    if (format === "pdf") {
+      await convertToPdf(context.imageFiles, context);
+    } else {
+      await convertToZip(context.imageFiles, context);
+    }
+  } catch (error) {
+    console.error("Conversion failed:", error);
+    showError("An unexpected error occurred during conversion.", context);
+  } finally {
+    setLoading(false, context);
   }
-  setLoading(false);
 }
