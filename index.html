@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client-Side Image & PDF Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .file-label {
+        transition: all 0.2s ease-in-out;
+      }
+      .file-label:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      /* Simple transition for sections appearing */
+      .hidden-section {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .visible-section {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
+      <!-- Header Section -->
+      <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-indigo-600 dark:text-indigo-400">Image & PDF Converter</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">Convert files right in your browser. Fast, private, and secure.</p>
+      </div>
+
+      <!-- File Upload Section -->
+      <div>
+        <label
+          for="image-input"
+          class="file-label cursor-pointer w-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-10 text-center hover:bg-gray-50 dark:hover:bg-gray-700"
+        >
+          <svg class="w-12 h-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V6a4 4 0 014-4h10a4 4 0 014 4v6a4 4 0 01-4 4H7z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m3-3H7"></path>
+          </svg>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">Images (PNG, JPG, SVG, etc.) and PDF files</p>
+        </label>
+        <input type="file" id="image-input" accept="image/*,application/pdf,image/svg+xml" class="hidden" multiple />
+      </div>
+
+      <!-- Error Message Placeholder -->
+      <div id="error-message" class="hidden text-center text-red-500 bg-red-100 dark:bg-red-900/50 p-3 rounded-lg"></div>
+
+      <!-- Image Details & Conversion Options Section -->
+      <div id="image-details" class="hidden-section space-y-6">
+        <div
+          id="preview-grid"
+          class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg"
+        >
+          <!-- Image previews will be injected here -->
+        </div>
+        <div class="text-sm space-y-2">
+          <p><strong>Files Selected:</strong> <span id="file-count"></span></p>
+          <p><strong>Total Size:</strong> <span id="total-size"></span></p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <!-- Format Selection -->
+          <div>
+            <label for="format-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Convert to:</label>
+            <select
+              id="format-select"
+              class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            >
+              <option value="jpeg">JPEG</option>
+              <option value="jpg">JPG</option>
+              <option value="png">PNG</option>
+              <option value="webp">WEBP</option>
+              <option value="bmp">BMP</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+          <!-- Quality Slider -->
+          <div id="quality-container">
+            <label for="quality-slider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quality: <span id="quality-value">0.9</span></label>
+            <input
+              id="quality-slider"
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.05"
+              value="0.9"
+              class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+        </div>
+
+        <button
+          id="convert-btn"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20h5v-5M20 4h-5v5"></path>
+          </svg>
+          <span id="convert-btn-text">Convert Files</span>
+        </button>
+      </div>
+
+      <!-- Output Section -->
+      <div id="output-section" class="hidden-section text-center p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-700 rounded-lg">
+        <h3 class="text-lg font-semibold text-green-800 dark:text-green-200">Conversion Complete!</h3>
+        <p class="text-sm text-green-700 dark:text-green-300 mt-1">Final file size: <span id="new-size" class="font-bold"></span></p>
+        <a
+          id="download-link"
+          href="#"
+          download="converted-files.zip"
+          class="mt-4 inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 transition-colors"
+        >
+          <span id="download-btn-text">Download All (.zip)</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Hidden canvas for processing -->
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+      // DOM element references
+      const imageInput = document.getElementById("image-input");
+      const previewGrid = document.getElementById("preview-grid");
+      const imageDetails = document.getElementById("image-details");
+      const fileCountEl = document.getElementById("file-count");
+      const totalSizeEl = document.getElementById("total-size");
+      const formatSelect = document.getElementById("format-select");
+      const qualityContainer = document.getElementById("quality-container");
+      const qualitySlider = document.getElementById("quality-slider");
+      const qualityValue = document.getElementById("quality-value");
+      const convertBtn = document.getElementById("convert-btn");
+      const convertBtnText = document.getElementById("convert-btn-text");
+      const outputSection = document.getElementById("output-section");
+      const downloadLink = document.getElementById("download-link");
+      const downloadBtnText = document.getElementById("download-btn-text");
+      const newSizeEl = document.getElementById("new-size");
+      const errorMessage = document.getElementById("error-message");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const RASTER_SCALE_FACTOR = 10; // Increase for higher quality rasterization of SVGs
+
+      let imageFiles = []; // Will store {file, image object}
+
+      // --- Event Listeners ---
+
+      // Listen for file input changes
+      imageInput.addEventListener("change", handleFileSelect);
+
+      // Listen for format changes to show/hide quality slider
+      formatSelect.addEventListener("change", () => {
+        const selectedFormat = formatSelect.value;
+        // PDF output doesn't have a quality setting
+        const isQualityVisible = selectedFormat === "jpeg" || selectedFormat === "webp";
+        qualityContainer.style.display = isQualityVisible ? "block" : "none";
+      });
+
+      // Update quality value display when slider moves
+      qualitySlider.addEventListener("input", () => {
+        qualityValue.textContent = qualitySlider.value;
+      });
+
+      // Listen for convert button clicks
+      convertBtn.addEventListener("click", processFiles);
+
+      // --- Functions ---
+
+      /**
+       * Handles the file selection event for multiple files (images and PDFs).
+       */
+      async function handleFileSelect(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        setLoading(true, "Loading files...");
+        // Reset state
+        imageFiles = [];
+        previewGrid.innerHTML = "";
+        hideError();
+        outputSection.classList.remove("visible-section");
+        outputSection.classList.add("hidden-section");
+
+        const filePromises = Array.from(files).map((file) => {
+          if (file.type.startsWith("image/")) {
+            // SVG is also image/svg+xml, so it is handled by handleImageFile now
+            return handleImageFile(file);
+          } else if (file.type === "application/pdf") {
+            return handlePdfFile(file);
+          } else {
+            console.warn(`Skipping unsupported file type: ${file.name}`);
+            return Promise.resolve(null);
+          }
+        });
+
+        try {
+          const results = await Promise.all(filePromises);
+          imageFiles = results.flat().filter(Boolean); // Flatten results for multi-page PDFs
+
+          if (imageFiles.length === 0) {
+            showError("No valid image or PDF files were selected.");
+            imageDetails.classList.remove("visible-section");
+            imageDetails.classList.add("hidden-section");
+            return;
+          }
+
+          displayPreviewsAndDetails();
+        } catch (error) {
+          console.error("Error loading files:", error);
+          showError("There was an error loading one or more files.");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      /**
+       * Processes a single image file, including SVGs.
+       */
+      function handleImageFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => resolve({ file, image: img });
+            img.onerror = reject;
+            img.src = e.target.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      /**
+       * Processes all pages of a single PDF file, creating an image preview for each.
+       */
+      function handlePdfFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            try {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+              const pdf = await pdfjsLib.getDocument({ data: e.target.result }).promise;
+              const numPages = pdf.numPages;
+              const pagePromises = [];
+
+              for (let i = 1; i <= numPages; i++) {
+                // Create a self-invoking async function to process each page
+                pagePromises.push(
+                  (async (pageNum) => {
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.5 });
+
+                    const tempCanvas = document.createElement("canvas");
+                    const tempCtx = tempCanvas.getContext("2d");
+                    tempCanvas.height = viewport.height;
+                    tempCanvas.width = viewport.width;
+
+                    await page.render({ canvasContext: tempCtx, viewport }).promise;
+
+                    const img = new Image();
+                    const originalFilename = file.name.substring(0, file.name.lastIndexOf("."));
+
+                    // Create a file-like object for each page for consistent handling
+                    const pageFile = {
+                      name: `${originalFilename}-page-${pageNum}`,
+                      size: file.size / numPages, // Approximate size
+                      type: "application/pdf-page", // Custom type
+                    };
+
+                    // Return a new promise that resolves when the image is loaded
+                    return new Promise((res, rej) => {
+                      img.onload = () => res({ file: pageFile, image: img });
+                      img.onerror = rej;
+                      img.src = tempCanvas.toDataURL("image/png");
+                    });
+                  })(i)
+                );
+              }
+              // Resolve the main promise with an array of all page-image objects
+              resolve(await Promise.all(pagePromises));
+            } catch (error) {
+              console.error("Error processing PDF:", file.name, error);
+              reject(error);
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      /**
+       * Displays image previews and file details in the UI.
+       */
+      function displayPreviewsAndDetails() {
+        let totalSize = 0;
+        previewGrid.innerHTML = "";
+        imageFiles.forEach(({ file, image }) => {
+          totalSize += file.size;
+          const previewEl = document.createElement("img");
+          previewEl.src = image.src;
+          previewEl.alt = file.name;
+          previewEl.title = `${file.name} (${formatBytes(file.size)})`;
+          previewEl.className = "w-full h-full object-cover rounded-md shadow-sm";
+          previewGrid.appendChild(previewEl);
+        });
+
+        fileCountEl.textContent = imageFiles.length;
+        totalSizeEl.textContent = formatBytes(totalSize);
+
+        imageDetails.classList.remove("hidden-section");
+        imageDetails.classList.add("visible-section");
+      }
+
+      /**
+       * Main function to route to the correct conversion method based on user selection.
+       */
+      async function processFiles() {
+        if (imageFiles.length === 0) {
+          showError("No files selected to convert.");
+          return;
+        }
+        const format = formatSelect.value;
+        setLoading(true, "Converting...");
+
+        if (format === "pdf") {
+          await convertToPdf();
+        } else {
+          await convertToZip();
+        }
+        setLoading(false);
+      }
+
+      /**
+       * Converts all loaded images/previews into a single multi-page PDF.
+       */
+      async function convertToPdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF("p", "pt", "a4");
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        for (let i = 0; i < imageFiles.length; i++) {
+          const { image } = imageFiles[i];
+          if (i > 0) doc.addPage();
+
+          // Rasterize every image onto a high-res canvas with a white background
+          const width = image.naturalWidth || image.width;
+          const height = image.naturalHeight || image.height;
+          canvas.width = width * RASTER_SCALE_FACTOR;
+          canvas.height = height * RASTER_SCALE_FACTOR;
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+          const imageDataUrl = canvas.toDataURL("image/jpeg", 0.95); // Use JPEG for smaller PDF size
+
+          const imgProps = doc.getImageProperties(imageDataUrl);
+          const pageRatio = pageWidth / pageHeight;
+          const imageRatio = imgProps.width / imgProps.height;
+
+          let imgWidth, imgHeight;
+          if (imageRatio > pageRatio) {
+            imgWidth = pageWidth - 20; // with margin
+            imgHeight = imgWidth / imageRatio;
+          } else {
+            imgHeight = pageHeight - 20; // with margin
+            imgWidth = imgHeight * imageRatio;
+          }
+          const x = (pageWidth - imgWidth) / 2;
+          const y = (pageHeight - imgHeight) / 2;
+
+          doc.addImage(imageDataUrl, "JPEG", x, y, imgWidth, imgHeight);
+        }
+
+        const pdfBlob = doc.output("blob");
+        downloadLink.href = URL.createObjectURL(pdfBlob);
+        downloadLink.download = "converted-files.pdf";
+        downloadBtnText.textContent = "Download All (.pdf)";
+        newSizeEl.textContent = formatBytes(pdfBlob.size);
+
+        outputSection.classList.remove("hidden-section");
+        outputSection.classList.add("visible-section");
+      }
+
+      /**
+       * Converts all loaded images/previews into a zip of individual image files.
+       */
+      async function convertToZip() {
+        const zip = new JSZip();
+        const format = formatSelect.value;
+        // Map 'jpg' to 'jpeg' for mime type
+        const mimeType = format === "jpg" ? "image/jpeg" : `image/${format}`;
+        const quality = parseFloat(qualitySlider.value);
+
+        const conversionPromises = imageFiles.map(({ file, image }) => {
+          return new Promise((resolve) => {
+            // Use a higher resolution canvas for better quality, especially for SVGs
+            const width = image.naturalWidth || image.width;
+            const height = image.naturalHeight || image.height;
+            canvas.width = width * RASTER_SCALE_FACTOR;
+            canvas.height = height * RASTER_SCALE_FACTOR;
+
+            // Add a white background to handle transparency in formats like JPEG
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the image onto the canvas, scaling it up
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(
+              (blob) => {
+                const originalFilename = file.name;
+                const lastDotIndex = originalFilename.lastIndexOf(".");
+                const nameWithoutExtension =
+                  lastDotIndex > 0 ? originalFilename.substring(0, lastDotIndex) : originalFilename;
+                const newFilename = `${nameWithoutExtension}.${format}`;
+                zip.file(newFilename, blob);
+                resolve();
+              },
+              mimeType,
+              quality
+            );
+          });
+        });
+        await Promise.all(conversionPromises);
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        downloadLink.href = URL.createObjectURL(zipBlob);
+        downloadLink.download = "converted-files.zip";
+        downloadBtnText.textContent = "Download All (.zip)";
+        newSizeEl.textContent = formatBytes(zipBlob.size);
+
+        outputSection.classList.remove("hidden-section");
+        outputSection.classList.add("visible-section");
+      }
+
+      /**
+       * Sets the loading state for the convert button.
+       */
+      function setLoading(isLoading, text = "Convert Files") {
+        convertBtn.disabled = isLoading;
+        convertBtnText.textContent = isLoading ? text : "Convert Files";
+      }
+
+      /**
+       * Utility to format bytes into KB, MB, etc.
+       */
+      function formatBytes(bytes, decimals = 2) {
+        if (!bytes || bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+      }
+
+      /**
+       * Displays an error message.
+       */
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove("hidden");
+      }
+
+      /**
+       * Hides the error message.
+       */
+      function hideError() {
+        errorMessage.classList.add("hidden");
+      }
+    </script>
+  </body>
+</html>
