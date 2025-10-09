@@ -35,6 +35,22 @@
 			opacity: 1;
 			transform: translateY(0);
 		}
+
+		/* filepath: c:\Git\converter\index.html */
+		@keyframes spin {
+			to {
+				transform: rotate(-360deg);
+			}
+		}
+
+		.spin {
+			animation: spin 1s linear infinite;
+		}
+
+		/* Spin the SVG when the button is disabled */
+		button:disabled svg {
+			animation: spin 1s linear infinite;
+		}
 	</style>
 </head>
 
@@ -107,7 +123,8 @@
 			</div>
 
 			<button id="convert-btn"
-				class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-indigo-400 disabled:cursor-not-allowed">
+				class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+				disabled>
 				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
 					xmlns="http://www.w3.org/2000/svg">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
