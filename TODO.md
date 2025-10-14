@@ -1,5 +1,5 @@
 - [ ] add tests from all types to all types
-- [ ] break file to more files with separate logic
+- [x] break file to more files with separate logic
 - [ ] add options based on the types in input and ouput
 - [ ] publish
 - [ ] monetise (ads etc.)
