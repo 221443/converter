@@ -1,17 +1,8 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true,
-        "node": true
-    },
     "extends": [
-        "eslint:recommended",
+        "next/core-web-vitals",
         "prettier"
     ],
-    "parserOptions": {
-        "ecmaVersion": "latest",
-        "sourceType": "module"
-    },
     "rules": {
         "no-unused-vars": "warn",
         "no-console": "warn",
@@ -24,7 +15,14 @@
                 "tests/**/*.js"
             ],
             "env": {
-                "vitest": true
+                "node": true
+            },
+            "globals": {
+                "describe": "readonly",
+                "it": "readonly",
+                "expect": "readonly",
+                "beforeEach": "readonly",
+                "vi": "readonly"
             }
         }
     ]
