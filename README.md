@@ -1,30 +1,92 @@
-# Client-Side Image & PDF Converter
+# 🚀 Client-Side Image & PDF Converter
 
-This is a powerful, browser-based utility for converting multiple image and PDF files without uploading them to a server. All processing is done directly on the client's machine, ensuring user data remains private and secure.
+[![CI/CD Pipeline](https://github.com/221443/converter/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/221443/converter/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-## Features
+A powerful, privacy-first browser-based utility for converting multiple image and PDF files without uploading them to a server. All processing happens directly on your device, ensuring complete data privacy and security.
 
-* **Batch Conversion:** Convert multiple files at once.
-* **Wide Format Support:**
-    * **Input:** PNG, JPEG, WEBP, BMP, SVG, and PDF.
-    * **Output:** JPEG, PNG, WEBP, BMP, and PDF.
-* **PDF Handling:**
-    * Convert images (including multi-page selections) into a single PDF document.
-    * Extract all pages from a PDF file and convert them into individual images.
-* **High-Quality SVG Conversion:** SVGs are rasterized at a higher resolution to ensure crisp output, with proper handling for transparent backgrounds.
-* **Adjustable Quality:** Control the compression quality for JPEG and WEBP formats to balance file size and visual fidelity.
-* **Zip Downloads:** When converting to an image format, all files are bundled into a single `.zip` file for easy downloading.
-* **100% Client-Side:** No server is needed. Your files are never uploaded, providing maximum privacy.
+## ✨ Features
 
-## How to Use
+### Core Functionality
+* 🔄 **Batch Conversion:** Convert multiple files simultaneously
+* 📁 **Wide Format Support:**
+    * **Input:** PNG, JPEG, WEBP, BMP, SVG, and PDF
+    * **Output:** JPEG, PNG, WEBP, BMP, and PDF
+* 📄 **Advanced PDF Handling:**
+    * Convert images into multi-page PDF documents
+    * Extract individual pages from PDF files as images
+    * Customizable page layouts and sizes
+* 🎨 **High-Quality SVG Processing:** Advanced rasterization with transparency support
+* ⚙️ **Quality Control:** Adjustable compression for optimal file size vs. quality balance
+* 📦 **Smart Downloads:** Automatic ZIP bundling for batch conversions
+* 🔒 **100% Client-Side:** Zero server uploads - complete privacy guaranteed
 
-1.  **Open the File:** Simply open the `image-converter.html` file in any modern web browser (like Chrome, Firefox, or Edge).
-2.  **Upload Files:** Click the upload area to select files from your computer, or drag and drop them directly onto the page. You can select multiple files of different supported types.
-3.  **Choose Conversion Options:**
-    * Select your desired output format from the "Convert to" dropdown menu.
-    * If converting to JPEG or WEBP, adjust the quality slider as needed.
-4.  **Convert:** Click the "Convert Files" button to begin the process.
-5.  **Download:** Once the conversion is complete, a download link will appear. Click it to save your converted files as a `.zip` archive or a single `.pdf` file.
+### Advanced Features
+* 🎛️ **Image Filters:** Brightness, contrast, saturation, blur, sepia, grayscale
+* 📏 **Smart Resizing:** Multiple scaling algorithms
+* 📊 **Progress Tracking:** Real-time conversion progress
+* 📈 **Performance Monitoring:** Built-in analytics and optimization
+* 🌙 **Dark Mode:** Responsive design with theme support
+
+## 🚀 Quick Start
+
+### Option 1: Use Online (Recommended)
+Visit the live demo: [https://221443.github.io/converter](https://221443.github.io/converter)
+
+### Option 2: Local Development
+```bash
+# Clone the repository
+git clone https://github.com/221443/converter.git
+cd converter
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## 🎯 How to Use
+
+1. **📂 Upload Files:** Click the upload area or drag & drop your files
+2. **⚙️ Choose Options:** Select output format and adjust quality settings
+3. **🔄 Convert:** Click "Convert Files" and watch the progress
+4. **📥 Download:** Get your converted files as a ZIP or PDF
+
+## 🛠️ Development
+
+### Prerequisites
+- Node.js 18+ 
+- Modern web browser
+
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run test         # Run test suite
+npm run test:ui      # Run tests with UI
+npm run lint         # Lint code
+npm run format       # Format code
+npm run deploy       # Deploy to GitHub Pages
+```
+
+### Project Structure
+```
+converter/
+├── src/
+│   ├── app.js              # Main application logic
+│   ├── converter.js        # Core conversion functions
+│   ├── fileHandler.js      # File processing utilities
+│   ├── utils.js           # Helper functions
+│   └── analytics.js       # Performance monitoring
+├── tests/                 # Test suite
+├── dist/                  # Built files
+└── docs/                  # Documentation
+```
 
 ## Technologies Used
 

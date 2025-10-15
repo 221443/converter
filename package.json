@@ -1,0 +1,56 @@
+{
+  "name": "client-side-converter",
+  "version": "1.0.0",
+  "description": "A powerful, browser-based utility for converting multiple image and PDF files without uploading them to a server",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint . --ext js,jsx,ts,tsx",
+    "lint:fix": "eslint . --ext js,jsx,ts,tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "deploy": "gh-pages -d dist",
+    "analyze": "vite-bundle-analyzer"
+  },
+  "keywords": [
+    "image-converter",
+    "pdf-converter",
+    "client-side",
+    "browser-based",
+    "privacy",
+    "batch-conversion",
+    "file-processing"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/ui": "^1.0.0",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "gh-pages": "^6.0.0",
+    "jsdom": "^27.0.0",
+    "prettier": "^3.0.0",
+    "vite": "^5.0.0",
+    "vite-bundle-analyzer": "^0.7.0",
+    "vitest": "^1.6.1"
+  },
+  "dependencies": {
+    "jspdf": "^2.5.1",
+    "jszip": "^3.10.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/221443/converter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/221443/converter/issues"
+  },
+  "homepage": "https://github.com/221443/converter#readme"
+}
